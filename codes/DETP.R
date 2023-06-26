@@ -27,22 +27,9 @@ fun_target <- function(querydata){
 }
 
 
-
-#cpp_gene_dat_match2564 <- fread("../CMap_Rproj/cpp_gene_data_match2564_2.csv",header = T,)
-#cpp_gene_dat_match2564[1:5,1:4]
-#cpp_gene_dat_match2564 <- column_to_rownames(cpp_gene_dat_match2564 ,var = "V1")
-#library(dplyr)
-#library(tibble)
-
-
-#cp_geneinfo_beta.txt <- fread("D:/下载/geneinfo_beta (1).txt",sep = "\t",header = T)
-#cpp_gene_dat_match2564 <- cpp_gene_dat_match2564[rownames(cpp_gene_dat_match2564) %in% 
-                                                   cp_geneinfo_beta.txt$gene_symbol[cp_geneinfo_beta.txt$feature_space != 'inferred'],]
-
-
-load('D:/data/Cmap_all_coms_geneexp.Rdata') # read gene expression profiles of all CMap compounds. This file is too large and can be obtained on request.
-load('D:/data/target_up_symbol.Rdata') # up gene set of target gene module pair
-load('D:/data/target_dn_symbol.Rdata') # down gene set of target gene module pair
+load('data/Cmap_all_coms_geneexp.Rdata') # read gene expression profiles of all CMap compounds. This file is too large and can be obtained on request.
+load('data/target_up_symbol.Rdata') # up gene set of target gene module pair
+load('data/target_dn_symbol.Rdata') # down gene set of target gene module pair
 
 res <- fun_target(Cmap_all_coms_geneexp)
 
@@ -51,115 +38,6 @@ save(res,file = "Cmap_com_target_DES.Rdata") # DES values between all CMap compo
 
 
 
-
-fun_target <- function(querydata,target_dn_symbol,target_up_symbol,target_phi){
-  
-  # cpp_gene_dat_match2564 <- fread("../CMap_Rproj/cpp_gene_data_match2564_2.csv",header = T,)
-  # cpp_gene_dat_match2564 <- column_to_rownames(cpp_gene_dat_match2564 ,var = "V1")
-  # load('D:/Py/Cmap/CMap_Rproj/target_phi.Rdata')
-  # load('D:/Py/Cmap/CMap_Rproj/target_up_symbol.Rdata')
-  # load('D:/Py/Cmap/CMap_Rproj/target_dn_symbol.Rdata')
-  nsets<- length(target_dn_symbol[,1])
-  genenames<- rownames(querydata)
-  n_sample <- ncol(querydata)
-  A <-apply(querydata, 2,  function(x){order(x,decreasing = TRUE)})  
-  TES <- matrix(ncol = n_sample,nrow = nsets)
-  
-  for(q in 1:nsets){
-    up_gene_order <- match(target_up_symbol[q,], genenames)
-    up_gene_order <- up_gene_order[!is.na(up_gene_order)]
-    dw_gene_order <- match(target_dn_symbol[q,], genenames)
-    dw_gene_order <- dw_gene_order[!is.na(dw_gene_order)]
-    for (p in 1:n_sample) {
-      gene.list2 <- A[,p]
-      upES <- unlist(GSEA.EnrichmentScore2(gene.list = gene.list2, gene.set = up_gene_order, weighted.score.type = 0))
-      downES <- unlist(GSEA.EnrichmentScore2(gene.list = gene.list2, gene.set = dw_gene_order, weighted.score.type = 0))
-      TES[q,p] <- upES - downES
-    }
-  }
-  
-  ###2、计算random TESvalue
-  rows <- length(genenames)
-  nperm <- 1000
-  # phi <- matrix(ncol = 1000,nrow = nsets)
-  # for(q in 1:nsets){
-  #   up_gene_order <- match(target_up_symbol[q,], genenames)
-  #   up_gene_order <- up_gene_order[!is.na(up_gene_order)]
-  #   dw_gene_order <- match(target_dn_symbol[q,], genenames)
-  #   dw_gene_order <- dw_gene_order[!is.na(dw_gene_order)]
-  #   for (p in 1:1000) {
-  #     reshuffled.gene.labels <- sample(1:rows)#随机的基因列的order
-  #     #GSEA.EnrichmentScore2 是GSEA计算函数
-  #     upES <- unlist(GSEA.EnrichmentScore2(gene.list = reshuffled.gene.labels, gene.set = up_gene_order, weighted.score.type = 0))
-  #     downES <- unlist(GSEA.EnrichmentScore2(gene.list = reshuffled.gene.labels, gene.set = dw_gene_order, weighted.score.type = 0))
-  #     phi[q,p] <- upES - downES
-  #   }
-  # } 
-  # target_phi <- phi
-  # save(target_phi,file = 'target_phi.Rdata')
-  phi <- target_phi[1:8735,]
-  ###3、计算 p value  
-  pvalue <- matrix(nrow = nsets,ncol = n_sample)
-  for(i in 1:n_sample){
-    for (j in 1:nsets) {
-      pvalue[j,i] <- ifelse(TES[j,i] >= 0, sum(phi[j,] >= TES[j,i])/sum(phi[j,]>=0), 
-                            sum(phi[j,] < TES[j,i])/sum(phi[j,]<0))
-    } 
-  }
-  ###3、计算NESvalue and fdr value
-  # 
-  phi.pos.mean <- apply(phi,1,function(x){
-    mean(x[x>=0])
-  })
-  phi.neg.mean <- apply(phi,1,function(x){
-    mean(abs(x[x<0]))
-  })
-  
-  phi.norm.pos <- phi
-  phi.norm.pos[phi<0]<-0
-  phi.norm.pos <-phi.norm.pos/phi.pos.mean
-  phi.norm.neg <- phi
-  phi.norm.neg[phi>=0]<-0
-  phi.norm.neg <-phi.norm.neg/phi.neg.mean
-  phi.norm <- phi
-  phi.norm[phi<0] <- phi.norm.neg[phi<0]
-  phi.norm[phi>=0] <- phi.norm.pos[phi>=0]
-  #r#r#r#r#r#r#r#r#r#r#r#r#r#r
-  ES_query <- TES
-  ES_query.pos <- ES_query
-  ES_query.pos[ES_query<0]<-0
-  ES_query.pos <-ES_query.pos/phi.pos.mean
-  ES_query.neg <- ES_query
-  ES_query.neg[ES_query>=0]<-0
-  ES_query.neg <-ES_query.neg/phi.neg.mean
-  
-  ES_query.norm <- ES_query
-  ES_query.norm[ES_query<0] <- ES_query.neg[ES_query<0]
-  ES_query.norm[ES_query>=0] <- ES_query.pos[ES_query>=0]
-  
-  FDRvalue <- matrix(nrow = nsets,ncol = n_sample)
-  
-  for(i in 1:n_sample){
-    for (j in 1:nsets) {
-      if(ES_query.norm[j,i] >= 0){
-        A <- sum(phi.norm >= ES_query.norm[j,i])/sum(phi.norm>=0)
-        B <- sum(ES_query.norm >= ES_query.norm[j,i])/sum(ES_query.norm>=0)
-        FDRvalue[j,i] <- A/B 
-      }
-      else{
-        A <- sum(phi.norm <= ES_query.norm[j,i])/sum(phi.norm<0)
-        B <- sum(ES_query.norm <= ES_query.norm[j,i])/sum(ES_query.norm<0)
-        FDRvalue[j,i] <- A/B
-      } 
-    }                   
-  }
-  
-  query_target_gsea <- cbind(TES,ES_query.norm, pvalue, FDRvalue)
-  rownames(query_target_gsea) <- rownames(target_dn_symbol)
-  colnames(query_target_gsea) <- c(paste(rep(colnames(querydata),times=4),rep(c("_CS","_NCS","_Pvalue","_FDR"),each=n_sample),sep = ""))
-  gc()
-  return(query_target_gsea)
-}
 
 
 
