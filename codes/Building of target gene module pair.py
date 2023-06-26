@@ -6,21 +6,21 @@ from operator import *
 
 
 # compound induced gene expression data
-cp_info_combine_1 = pd.read_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/cp_info_combine_1.csv") # This data were collated previously
+cp_info_combine_1 = pd.read_csv("data/cp_info_combine_1.csv") # This data were collated previously
 
 
 #genetic gene expression profile data
-oe_gene_data = pd.read_csv("D:/Py/Cmap/oe_gene_data.csv")
+oe_gene_data = pd.read_csv("data/oe_gene_data.csv")
 unique_oe_gene = list(set(oe_gene_data.iloc[:,0]))#4040
 
-xpr_gene_data = pd.read_csv("D:/Py/Cmap/xpr_gene_data.csv")
+xpr_gene_data = pd.read_csv("data/xpr_gene_data.csv")
 unique_xpr_gene = list(set(xpr_gene_data.iloc[:,0]))#5157
 
-sh_cgs_gene_data = pd.read_csv("D:/Py/Cmap/sh_cgs_gene_data.csv")
+sh_cgs_gene_data = pd.read_csv("data/sh_cgs_gene_data.csv")
 sh_cgs_gene_data = sh_cgs_gene_data.iloc[:4345,:]# after 4345 were removed
 unique_sh_cgs_gene = list(set(sh_cgs_gene_data.iloc[:,0]))#4345
 
-#oe数据中有许多基因为假基因或者多个基因名以-连接
+#oe data, Many genes in the data are pseudogenes or gene names are "-" linked
 target_profile_from_info = []
 for gene in unique_gene:
     pro_from = []
@@ -44,22 +44,22 @@ for gene in unique_gene:
 target_profile_from_info = pd.DataFrame(target_profile_from_info)
 target_profile_from_info.columns = ['cp','sh','xpr','oe']
 target_profile_from_info.index = unique_gene
-target_profile_from_info.to_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/target_profile_from_info.csv")
+target_profile_from_info.to_csv("data/target_profile_from_info.csv")
 
 
 
 # using R package HGNChelper translates gene symbols into standard symbols，in the file of target_set_name_transinfo.csv
-target_set_name1 = pd.read_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/target_set_name_transinfo.csv")
+target_set_name1 = pd.read_csv("data/target_set_name_transinfo.csv")
 target_set_name1.index = list(target_set_name1['target_set_primary_name'])
 
 #map gene symbols
-cp_info_combine_1 = pd.read_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/cp_info_combine_1.csv")
+cp_info_combine_1 = pd.read_csv("data/cp_info_combine_1.csv")
 
 x = target_set_name1.loc[list(cp_info_combine_1['target']),:]
 x1 = eq(list(cp_info_combine_1['target']),list(x['target_set_primary_name']))
 
 cp_info_combine_1['target_new'] = list(x['Suggested.Symbol'])
-cp_info_combine_1.to_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/cp_info_combine_1.csv")
+cp_info_combine_1.to_csv("data/cp_info_combine_1.csv")
 cp_info_combine_2 = cp_info_combine_1.dropna(subset='target_new')#16802 -- 16801
 
 
@@ -173,8 +173,8 @@ target_profile_cmap1.index = cp_geneinfo_beta['gene_symbol']
 target_profile_cmap1 = target_profile_cmap1.iloc[:,1:]
 len(set(cp_geneinfo_beta['gene_symbol']))
 
-target_profile_cmap1.to_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/target_profile_cmap.csv")#cmap gene expression profiles for targets
-target_profile_cmap1 = pd.read_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/target_profile_cmap.csv",index_col=0)
+target_profile_cmap1.to_csv("data/target_profile_cmap.csv")#cmap gene expression profiles for targets
+target_profile_cmap1 = pd.read_csv("data/target_profile_cmap.csv",index_col=0)
 
 
 
@@ -193,8 +193,8 @@ target_up_symbol = pd.DataFrame(target_up_symbol)
 target_dn_symbol = pd.DataFrame(target_dn_symbol)
 target_dn_symbol.index = target_profile_cmap1.keys()
 target_up_symbol.index = target_profile_cmap1.keys()
-target_dn_symbol.to_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/target_dn_symbol.csv")
-target_up_symbol.to_csv("D:/Py/Cmap/Cmap/cmapPy/CMAP_target/target_up_symbol.csv")
+target_dn_symbol.to_csv("data/target_dn_symbol.csv")
+target_up_symbol.to_csv("data/target_up_symbol.csv")
 
 
 
