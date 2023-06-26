@@ -4,7 +4,7 @@ from DeepPurpose.dataset import *
 import pandas as pd
 import numpy as np
 
-X_pred = pd.read_csv("D:\\Py\\Cmap\\CMap_Rproj_1\\bindingDB_traindat/bindingDB_train_dat_2.csv")
+X_pred = pd.read_csv("data/binding_train_dat.csv")
 # X_pred_1 = X_pred[X_pred['test_label'] == True]
 # X_pred = X_pred[X_pred['test_label'] == False]
 X_drug = X_pred['smiles_rdkit']
@@ -33,7 +33,7 @@ config = generate_config(drug_encoding = drug_encoding,
 model = models.model_initialize(**config)
 
 model.train(train, val, test)
-model.save_model('bindingDB_train_sample_2')
+model.save_model('binding_train_model')
 
 
 
